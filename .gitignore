@@ -1,4 +1,5 @@
 .DS_Store
 data
 data_scraping
+!data_scraping/dags/book_scraping.py
 .env
