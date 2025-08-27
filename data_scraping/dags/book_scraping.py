@@ -6,7 +6,7 @@ import json
 import glob
 import boto3
 import pandas as pd  
-import pyarrow as pa
+from io import BytesIO  
 from datetime import datetime
 from include.book_scraping.deduplication import deduplicate_books   
 from include.book_scraping.scraping import get_filtered_books
@@ -235,11 +235,9 @@ def book_scraping_pipeline():
             }
     
     @task()
-    def upload_to_s3():
-        """Upload books and IDs to separate S3 folders"""
-        
-        # Fix: bucket_name should not include path
-        bucket_name = "book-scraping-data-googlebooks"
+    def upload_to_s3_parquet():
+        """Upload data directly as Parquet to S3"""
+        bucket_name = "googlebooks-scraping-data"
         s3_client = boto3.client('s3')
         
         # Create bucket if needed
@@ -247,7 +245,7 @@ def book_scraping_pipeline():
             s3_client.head_bucket(Bucket=bucket_name)
         except:
             s3_client.create_bucket(Bucket=bucket_name)
-
+        
         # Get file paths from XCom
         context = get_current_context()
         file_paths = context['ti'].xcom_pull(task_ids='deduplicate_books_task')
@@ -255,14 +253,39 @@ def book_scraping_pipeline():
         books_file = file_paths['books_file']
         ids_file = file_paths['ids_file']
         
-        # Upload to S3
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        s3_client.upload_file(books_file, bucket_name, f"books/deduplicated_books_{timestamp}.json")
-        s3_client.upload_file(ids_file, bucket_name, f"ids/book_ids_{timestamp}.json")
+        # Create timestamp for partitioning
+        timestamp = datetime.now()
+        date_partition = timestamp.strftime('%Y-%m-%d')
+        hour_partition = timestamp.strftime('%H')
+        file_timestamp = timestamp.strftime('%Y%m%d_%H%M%S')
         
-        return "Upload complete"
+        # Convert and upload books data
+        books_df = pd.read_json(books_file)
+        books_buffer = BytesIO()
+        books_df.to_parquet(books_buffer, index=False)
+        books_buffer.seek(0)
+        
+        s3_client.upload_fileobj(
+            books_buffer, 
+            bucket_name, 
+            f"books/date={date_partition}/hour={hour_partition}/books_{file_timestamp}.parquet"
+        )
+        
+        # Convert and upload IDs data
+        ids_df = pd.read_json(ids_file)
+        ids_buffer = BytesIO()
+        ids_df.to_parquet(ids_buffer, index=False)
+        ids_buffer.seek(0)
+        
+        s3_client.upload_fileobj(
+            ids_buffer, 
+            bucket_name, 
+            f"ids/date={date_partition}/hour={hour_partition}/ids_{file_timestamp}.parquet"
+        )
+        
+        return f"Upload complete: {file_timestamp}"
 
 
-    cleanup_temp_folder() >> init_database() >> get_last_processed_author()  >> fetch_books_task() >> deduplicate_books_task() >> upload_to_s3()
+    cleanup_temp_folder() >> init_database() >> get_last_processed_author()  >> fetch_books_task() >> deduplicate_books_task() >> upload_to_s3_parquet()
 
 book_scraping_pipeline()
