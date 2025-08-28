@@ -6,4 +6,6 @@ data_scraping/*
 !data_scraping/include/*
 data_scraping/include/book_scraping/__pycache__
 data_scraping/dags/__pycache__
+!data_scraping/dags/*
+!data_scraping/dags/vector_processing.py
 .env
