@@ -1,0 +1,12 @@
+books_project:
+  target: dev
+  outputs:
+    dev:
+      type: athena
+      s3_staging_dir: s3://googlebooks-scraping-data/athena-results/
+      s3_data_dir: s3://googlebooks-scraping-data/dbt-output/
+      region_name: us-east-1
+      database: awsdatacatalog      # this is actually the name of your Glue catalog
+      schema: books_db              # this has to match the name of your Glue database
+      work_group: primary
+      threads: 4

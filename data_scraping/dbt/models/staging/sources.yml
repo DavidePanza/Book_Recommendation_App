@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: books_db
+    description: "Book data in Athena"
+    
+    tables:
+      - name: books_raw_parquet
+        description: "Raw Google Books JSON, converted to Parquet in S3"
+        columns:
+          - name: id
+            description: "Unique book identifier"
+          - name: volumeInfo
+            description: "Nested JSON with book details"
+          - name: saleInfo
+            description: "Sales metadata"
+
+      # - name: books_processed_daily
+      #   description: "Daily processed book data from Airflow"
+      #   columns:
+      #     - name: books_data
+      #       description: "Array of book objects"
+      #     - name: processing_date
+      #       description: "Date when data was processed"
