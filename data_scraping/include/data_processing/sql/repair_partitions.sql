@@ -1,0 +1,1 @@
+MSCK REPAIR TABLE books_db.books_raw_parquet;

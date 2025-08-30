@@ -1,12 +1,20 @@
 .DS_Store
 data
 data_scraping/*
-!data_scraping/dags/*
-!data_scraping/notebooks/*
-!data_scraping/include/*
-!data_scraping/dbt
-data_scraping/include/book_scraping/__pycache__
-data_scraping/dags/__pycache__
-!data_scraping/dags/*
-!data_scraping/dags/vector_processing.py
-.env
+
+# Re-include specific directories
+!data_scraping/dags/
+!data_scraping/notebooks/
+!data_scraping/include/
+!data_scraping/dbt/
+
+# Now unignore contents inside include
+!data_scraping/include/data_processing/
+!data_scraping/include/data_processing/sql/
+
+# Ignore caches
+data_scraping/include/book_scraping/__pycache__/
+data_scraping/dags/__pycache__/
+data_scraping/dags/.airflowignore
+data_scraping/dags/vector_processing.py
+
