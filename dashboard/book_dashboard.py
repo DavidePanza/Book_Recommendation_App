@@ -175,7 +175,7 @@ app.layout = html.Div([
                 figure=px.histogram(
                     book_data,
                     x='avg_rating',
-                    nbins=20,
+                    nbins=10,
                     title='Rating Distribution',
                     labels={'avg_rating': 'Average Rating', 'count': 'Number of Books'}
                 ).update_layout(height=400)

@@ -33,18 +33,11 @@ SELECT DISTINCT
     COALESCE(volumeInfo.pageCount, 0) as page_count,
     CASE 
         WHEN cardinality(volumeInfo.categories) > 0
-            AND LENGTH(volumeInfo.categories[1]) <= 30
-        THEN LOWER(volumeInfo.categories[1])
-        ELSE NULL
+        THEN volumeInfo.categories[1]
+        ELSE 'Uncategorized'
     END as primary_category,
     volumeInfo.categories as all_categories,
-    CASE
-        WHEN volumeInfo.ratingsCount IS NULL 
-            OR volumeInfo.ratingsCount = 0 
-            OR volumeInfo.averageRating IS NULL
-        THEN NULL
-        ELSE volumeInfo.averageRating
-    END as avg_rating,
+    COALESCE(volumeInfo.averageRating, 0.0) as avg_rating,
     COALESCE(volumeInfo.ratingsCount, 0) as ratings_count,
     COALESCE(volumeInfo.imageLinks.thumbnail, '') as thumbnail_url,
     COALESCE(volumeInfo.language, 'en') as language,
@@ -71,6 +64,8 @@ WHERE date >= '{{ var("start_date", "2025-08-25") }}'
   AND id IS NOT NULL
   AND volumeInfo.title IS NOT NULL
   AND LENGTH(COALESCE(volumeInfo.description, '')) > 100
+  AND volumeInfo.publishedDate IS NOT NULL
+  AND volumeInfo.publishedDate != ''
 
 {% if is_incremental() %}
   -- Only process data newer than what we already have
