@@ -76,7 +76,7 @@ def query_athena(query):
 try:
     book_data = query_athena("""
         SELECT title, primary_author, publisher, publication_year, 
-               avg_rating, primary_category, list_price, currency
+               avg_rating, ratings_count, primary_category, list_price, currency
         FROM books_db.stg_books_flattening 
         ORDER BY publication_year DESC
         LIMIT 500
@@ -96,6 +96,7 @@ except:
 
 # Calculate summary metrics
 total_books = len(book_data)
+ratings_count = book_data['ratings_count'].sum()
 avg_rating = book_data['avg_rating'].mean()
 latest_year = book_data['publication_year'].max()
 
@@ -193,6 +194,7 @@ app.layout = html.Div([
                 {'name': 'Publisher', 'id': 'publisher'},
                 {'name': 'Year', 'id': 'publication_year'},
                 {'name': 'Rating', 'id': 'avg_rating', 'type': 'numeric', 'format': {'specifier': '.1f'}},
+                {'name': 'Ratings Count', 'id': 'ratings_count', 'type': 'numeric', 'format': {'specifier': 'd'}},
                 {'name': 'Category', 'id': 'primary_category'}
             ],
             style_cell={'textAlign': 'left', 'padding': '10px'},

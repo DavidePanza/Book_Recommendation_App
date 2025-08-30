@@ -13,19 +13,31 @@ SELECT DISTINCT
     volumeInfo.title as title,
     COALESCE(volumeInfo.subtitle, '') as subtitle,
     CASE 
-        WHEN cardinality(volumeInfo.authors) > 0 
-        THEN volumeInfo.authors[1] 
-        ELSE 'Unknown Author' 
+        WHEN cardinality(volumeInfo.authors) > 0
+        THEN volumeInfo.authors[1]
+        ELSE 'Unknown Author'
     END as primary_author,
     volumeInfo.authors as all_authors,
     COALESCE(volumeInfo.publisher, 'Unknown Publisher') as publisher,
-    TRY_CAST(volumeInfo.publishedDate as DATE) as published_date,
+    -- More robust date parsing
+    CASE 
+        -- Try full date format first
+        WHEN TRY_CAST(volumeInfo.publishedDate as DATE) IS NOT NULL 
+        THEN TRY_CAST(volumeInfo.publishedDate as DATE)
+        -- Try year-month format by adding day
+        WHEN volumeInfo.publishedDate RLIKE '^\d{4}-\d{2}$' 
+        THEN TRY_CAST(volumeInfo.publishedDate || '-01' as DATE)
+        -- Try year only format by adding month and day
+        WHEN volumeInfo.publishedDate RLIKE '^\d{4}$' 
+        THEN TRY_CAST(volumeInfo.publishedDate || '-01-01' as DATE)
+        ELSE NULL
+    END as published_date,
     COALESCE(volumeInfo.description, '') as description,
     COALESCE(volumeInfo.pageCount, 0) as page_count,
     CASE 
-        WHEN cardinality(volumeInfo.categories) > 0 
-        THEN volumeInfo.categories[1] 
-        ELSE 'Uncategorized' 
+        WHEN cardinality(volumeInfo.categories) > 0
+        THEN volumeInfo.categories[1]
+        ELSE 'Uncategorized'
     END as primary_category,
     volumeInfo.categories as all_categories,
     COALESCE(volumeInfo.averageRating, 0.0) as avg_rating,
@@ -38,12 +50,20 @@ SELECT DISTINCT
     COALESCE(saleInfo.listPrice.amount, 0.0) as list_price,
     COALESCE(saleInfo.listPrice.currencyCode, 'USD') as currency,
     COALESCE(saleInfo.buyLink, '') as buy_link,
-    date as processing_date,  -- Use the actual partition date from raw data
-    -- MUST BE LAST: Partition column
-    COALESCE(
-        YEAR(TRY_CAST(volumeInfo.publishedDate as DATE)), 
-        9999
-    ) as publication_year
+    date as processing_date,
+    -- MUST BE LAST: Partition column with robust year extraction
+    CASE 
+        -- Extract year from successfully parsed date
+        WHEN TRY_CAST(volumeInfo.publishedDate as DATE) IS NOT NULL 
+        THEN YEAR(TRY_CAST(volumeInfo.publishedDate as DATE))
+        -- Extract year from year-month format
+        WHEN volumeInfo.publishedDate RLIKE '^\d{4}-\d{2}$' 
+        THEN CAST(SUBSTRING(volumeInfo.publishedDate, 1, 4) as INT)
+        -- Extract year from year-only format  
+        WHEN volumeInfo.publishedDate RLIKE '^\d{4}$'
+        THEN CAST(volumeInfo.publishedDate as INT)
+        ELSE NULL
+    END as publication_year
 FROM {{ source('books_db', 'books_raw_parquet') }}
 WHERE date >= '{{ var("start_date", "2025-08-25") }}'
   AND date <= '{{ var("end_date", "2025-08-27") }}'
