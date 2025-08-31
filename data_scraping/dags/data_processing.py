@@ -52,6 +52,7 @@ def book_etl_pipeline():
         region_name=os.getenv('AWS_REGION', 'us-east-1'),
     )
 
+    # you don't need this
     # repair_partitions = AthenaOperator(
     #     task_id='repair_partitions',
     #     query=repair_partitions_sql,
