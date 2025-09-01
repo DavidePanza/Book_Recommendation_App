@@ -1,9 +1,16 @@
-from airflow.models import Variable
+import os
 
-def validate_inputs(**context):
-    required_vars = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "S3_BUCKET", "S3_KEY", "LANCEDB_URI", "LANCEDB_API_KEY", "LANCEDB_TABLE"]
+def validate_inputs():
+    """Validate required environment variables"""
+    required_vars = [
+        'AWS_ACCESS_KEY_ID',
+        'AWS_SECRET_ACCESS_KEY', 
+        'S3_BUCKET',
+        'LANCEDB_URI'
+    ]
+    
     for var in required_vars:
-        try:
-            Variable.get(var)
-        except Exception:
-            raise ValueError(f"Required Airflow Variable '{var}' not found")
+        if not os.getenv(var):
+            raise ValueError(f"Required environment variable '{var}' not found")
+    
+    return "All required environment variables found"

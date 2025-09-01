@@ -2,7 +2,7 @@
     materialized='incremental',
     incremental_strategy='insert_overwrite',
     unique_key='id',
-    partitioned_by=['processing_date'],  -- Changed from publication_year
+    partitioned_by=['processing_date'],
     tags=['staging'],
     external_location='s3://googlebooks-scraping-data/dbt-output/staging/',
     format='PARQUET'
