@@ -1,3 +1,4 @@
+{#
 {{ config(
     materialized='incremental',
     incremental_strategy='insert_overwrite',  
@@ -15,4 +16,5 @@ SELECT
     '{{ var("processing_date") }}' as processing_date
 FROM {{ ref('stg_books_flattening') }} 
 WHERE id IS NOT NULL
+#}
 

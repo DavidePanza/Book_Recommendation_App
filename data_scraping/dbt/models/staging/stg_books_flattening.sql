@@ -1,8 +1,8 @@
 {{ config(
     materialized='incremental',
-    incremental_strategy='insert_overwrite',  
+    incremental_strategy='insert_overwrite',
     unique_key='id',
-    partitioned_by=['publication_year'],
+    partitioned_by=['processing_date'],  -- Changed from publication_year
     tags=['staging'],
     external_location='s3://googlebooks-scraping-data/dbt-output/staging/',
     format='PARQUET'
@@ -21,11 +21,11 @@ SELECT DISTINCT
     COALESCE(volumeInfo.publisher, 'Unknown Publisher') as publisher,
     -- Robust date parsing - keeps full date
     CASE 
-        WHEN TRY(CAST(volumeInfo.publishedDate as DATE)) IS NOT NULL 
+        WHEN TRY(CAST(volumeInfo.publishedDate as DATE)) IS NOT NULL
         THEN TRY(CAST(volumeInfo.publishedDate as DATE))
-        WHEN REGEXP_LIKE(volumeInfo.publishedDate, '^\d{4}-\d{2}$') 
+        WHEN REGEXP_LIKE(volumeInfo.publishedDate, '^\d{4}-\d{2}$')
         THEN TRY(CAST(volumeInfo.publishedDate || '-01' as DATE))
-        WHEN REGEXP_LIKE(volumeInfo.publishedDate, '^\d{4}$') 
+        WHEN REGEXP_LIKE(volumeInfo.publishedDate, '^\d{4}$')
         THEN TRY(CAST(volumeInfo.publishedDate || '-01-01' as DATE))
         ELSE NULL
     END as published_date,
@@ -47,17 +47,19 @@ SELECT DISTINCT
     COALESCE(saleInfo.listPrice.amount, 0.0) as list_price,
     COALESCE(saleInfo.listPrice.currencyCode, 'USD') as currency,
     COALESCE(saleInfo.buyLink, '') as buy_link,
-    date as processing_date,
-    -- MUST BE LAST: Partition column - robust year extraction
+    -- Publication year as regular column (not partition)
     CASE 
-        WHEN TRY(CAST(volumeInfo.publishedDate as DATE)) IS NOT NULL 
+        WHEN TRY(CAST(volumeInfo.publishedDate as DATE)) IS NOT NULL
         THEN YEAR(TRY(CAST(volumeInfo.publishedDate as DATE)))
-        WHEN REGEXP_LIKE(volumeInfo.publishedDate, '^\d{4}-\d{2}$') 
+        WHEN REGEXP_LIKE(volumeInfo.publishedDate, '^\d{4}-\d{2}$')
         THEN CAST(SUBSTR(volumeInfo.publishedDate, 1, 4) as INTEGER)
         WHEN REGEXP_LIKE(volumeInfo.publishedDate, '^\d{4}$')
         THEN CAST(volumeInfo.publishedDate as INTEGER)
         ELSE NULL
-    END as publication_year
+    END as publication_year,
+    -- MUST BE LAST: Partition column - processing_date
+    date as processing_date
+
 FROM {{ source('books_db', 'books_raw_parquet') }}
 WHERE date >= '{{ var("start_date", "2025-08-25") }}'
   AND date <= '{{ var("end_date", "2025-08-27") }}'

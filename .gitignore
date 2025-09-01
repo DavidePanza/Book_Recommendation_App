@@ -1,6 +1,8 @@
 .DS_Store
 data
 data_scraping/*
+.env
+notebooks/test_lancedb.ipynb
 
 # Re-include specific directories
 !data_scraping/dags/
