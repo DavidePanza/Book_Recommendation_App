@@ -102,6 +102,7 @@ except:
 
 # Calculate summary metrics
 book_data['publisher'] = book_data['publisher'].apply(lambda x: x[:20] + "..." if len(x) > 20 else x)
+book_data['primary_category'] = book_data['primary_category'].str.lower().apply(lambda x: x[:20] + "..." if len(x) > 20 else x)
 total_books = len(book_data)
 ratings_count = book_data['ratings_count'].sum()
 avg_rating = book_data['avg_rating'].mean()
@@ -109,6 +110,11 @@ if book_data['publication_year'].max() > datetime.now().year:
     latest_year = datetime.now().year
 else:
     latest_year = book_data['publication_year'].max()
+
+# Category distribution with "Other" grouping
+category_counts = book_data['primary_category'].value_counts()
+filtered_df = category_counts[category_counts >= len(book_data) * 0.02].reset_index()
+filtered_df.columns = ['primary_category', 'count']
 
 # Dashboard layout
 app.layout = html.Div([
@@ -191,7 +197,7 @@ app.layout = html.Div([
         html.Div([
             dcc.Graph(
                 figure=px.pie(
-                    book_data['primary_category'].value_counts().reset_index(),
+                    filtered_df,
                     values='count',
                     names='primary_category',
                     title='Books by Category'
