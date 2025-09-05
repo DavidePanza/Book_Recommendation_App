@@ -3,11 +3,12 @@
 This app is a semantic book recommendation system with automated ETL pipeline and vector search capabilities.
 The whole thing is built around a data pipeline that automatically scrapes book information, processes it, and makes it searchable through semantic similarity. It's not just a simple database lookup - it uses embeddings to understand relationships between concepts and find books that are genuinely similar to what you're describing.
 
-## Try the App
 
-**[Link](https://huggingface.co/spaces/davidepanza/Book_Recommender_App)** (hosted on HF Spaces)
+**[Try the App](https://huggingface.co/spaces/davidepanza/Book_Recommender_App)** (hosted on HF Spaces)
 
-
+Currently few books are available in the database as I'm still testing the app but this will change in the next few weeks.
+You can see summaries of the available books at:
+**[Book Analytics Dashboard](https://book-recommendation-dashboard.onrender.com)**
 
 ## The Data Journey:
 
