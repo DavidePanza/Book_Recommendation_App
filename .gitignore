@@ -3,7 +3,8 @@ data
 trash
 data_scraping/*
 .env
-notebooks/test_lancedb.ipynb
+notebooks/*
+dashboard/test.py
 
 # Re-include specific directories
 !data_scraping/dags/
@@ -19,5 +20,5 @@ notebooks/test_lancedb.ipynb
 data_scraping/include/book_scraping/__pycache__/
 data_scraping/dags/__pycache__/
 data_scraping/dags/.airflowignore
-data_scraping/dags/vector_processing.py
+
 

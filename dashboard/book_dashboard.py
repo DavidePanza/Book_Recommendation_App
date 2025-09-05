@@ -6,12 +6,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 import os
+import time
 
 # Initialize Dash app
 app = dash.Dash(__name__)
-server = app.server  # Required for deployment
+server = app.server
 
-# AWS configuration - use environment variables for deployment
+# AWS configuration 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_REGION = 'us-east-1'
@@ -45,6 +46,8 @@ def query_athena(query):
                 break
             elif status in ['FAILED', 'CANCELLED']:
                 raise Exception(f"Query failed with status: {status}")
+                
+            time.sleep(2)
         
         # Get results
         s3 = boto3.client(
@@ -69,7 +72,11 @@ def query_athena(query):
             'primary_author': ['Author A', 'Author B'],
             'publication_year': [2020, 2021],
             'avg_rating': [4.2, 3.8],
-            'primary_category': ['Fiction', 'Non-fiction']
+            'ratings_count': [100, 150],
+            'primary_category': ['Fiction', 'Non-fiction'],
+            'publisher': ['Publisher A', 'Publisher B'],
+            'list_price': [12.99, 14.99],
+            'currency': ['USD', 'USD']
         })
 
 # Load data (with error handling for development)
@@ -79,7 +86,6 @@ try:
                avg_rating, ratings_count, primary_category, list_price, currency
         FROM books_db.stg_books_flattening 
         ORDER BY publication_year DESC
-        LIMIT 500
     """)
 except:
     # Fallback sample data for testing
@@ -95,10 +101,14 @@ except:
     })
 
 # Calculate summary metrics
+book_data['publisher'] = book_data['publisher'].apply(lambda x: x[:20] + "..." if len(x) > 20 else x)
 total_books = len(book_data)
 ratings_count = book_data['ratings_count'].sum()
 avg_rating = book_data['avg_rating'].mean()
-latest_year = book_data['publication_year'].max()
+if book_data['publication_year'].max() > datetime.now().year:
+    latest_year = datetime.now().year
+else:
+    latest_year = book_data['publication_year'].max()
 
 # Dashboard layout
 app.layout = html.Div([
@@ -106,6 +116,26 @@ app.layout = html.Div([
     html.Div([
         html.H1("Book Analytics Dashboard", 
                 style={'text-align': 'center', 'color': '#2c3e50', 'margin-bottom': '30px'})
+    ]),
+
+    # Overview section
+    html.Div([
+        html.P(
+            "This dashboard provides summary statistics and visualizations "
+            "for the collection of books sourced from Google Books and made "
+            "available to the Book Recommender. "
+            "Here, you can explore how many books are included, along with "
+            "insights into publication trends, ratings distribution, and "
+            "category breakdowns.",
+            style={
+                'textAlign': 'center',
+                'color': '#2c3e50',
+                'marginTop': '40px',
+                'marginBottom': '40px',
+                'fontSize': '16px',
+                'lineHeight': '1.6'
+            }
+        )
     ]),
     
     # Summary cards
@@ -187,7 +217,7 @@ app.layout = html.Div([
     html.Div([
         html.H3("Book Details", style={'margin-top': '30px'}),
         dash_table.DataTable(
-            data=book_data.head(10).to_dict('records'),
+            data=book_data.head(5).to_dict('records'),
             columns=[
                 {'name': 'Title', 'id': 'title'},
                 {'name': 'Author', 'id': 'primary_author'},
