@@ -14,8 +14,8 @@ from include.data_processing.utils import load_sql, initialize_s3_folders
     params={
         "reset_from_start": False,
         "authors_to_process": 5,
-        "start_date": "2025-08-28",
-        "end_date": "2025-08-30",
+        "start_date": "2025-09-08",
+        "end_date": "2025-09-10",
     },
     tags=['books', 'etl', 'parquet']
 )
