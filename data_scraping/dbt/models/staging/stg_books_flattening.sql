@@ -65,6 +65,7 @@ WHERE date >= '{{ var("start_date", "2025-08-25") }}'
   AND date <= '{{ var("end_date", "2025-08-27") }}'
   AND id IS NOT NULL
   AND volumeInfo.title IS NOT NULL
+  AND cardinality(volumeInfo.authors) > 0
   AND LENGTH(COALESCE(volumeInfo.description, '')) > 100
   AND volumeInfo.publishedDate IS NOT NULL
   AND volumeInfo.publishedDate != ''
