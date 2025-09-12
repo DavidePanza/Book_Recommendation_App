@@ -77,10 +77,3 @@ def book_etl_pipeline():
 
 # Instantiate the DAG
 book_dag = book_etl_pipeline()
-
-
-# Find specific book by ID (efficient)
-# SELECT bf.* 
-# FROM books_id_lookup bil
-# JOIN books_flattened bf ON bil.id = bf.id AND bil.publication_year = bf.publication_year
-# WHERE bil.id = 'abc123';
