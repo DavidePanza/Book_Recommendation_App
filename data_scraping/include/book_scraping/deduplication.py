@@ -45,11 +45,11 @@ def _calculate_text_overlap(text1, text2, word_threshold=5):
         window = ' '.join(words1[i:i + word_threshold])
         if window in words2_text:
             matches += word_threshold
-            i += word_threshold  # Skip ahead properly
+            i += word_threshold 
         else:
             i += 1
     
-    return min(matches / len(words1), 1.0)  # Cap at 100%
+    return min(matches / len(words1), 1.0) 
 
 
 def _find_similar_descriptions(books, similarity_threshold=0.8, min_description_length=50):
